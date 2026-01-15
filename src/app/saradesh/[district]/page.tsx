@@ -8,13 +8,20 @@ import CategoryChart from '../../../components/charts/CategoryChart';
 import { MapPin, TrendingUp, Newspaper, ChevronRight, Home } from 'lucide-react';
 import { Metadata } from 'next';
 
+// This ensures Netlify doesn't crash during the pre-build phase
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: { district: string };
   searchParams: { sort?: string };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const districtName = params.district.charAt(0).toUpperCase() + params.district.slice(1);
+  // SAFETY FIX: Check if district exists before calling charAt
+  const districtSlug = params?.district || '';
+  const districtName = districtSlug 
+    ? districtSlug.charAt(0).toUpperCase() + districtSlug.slice(1) 
+    : 'District';
   
   return {
     title: `${districtName} News - PH Newspaper`,
@@ -34,6 +41,8 @@ export async function generateStaticParams() {
 
 async function getDistrictData(districtName: string, sort: string) {
   await connectDB();
+
+  if (!districtName) return null;
 
   const district = BANGLADESH_DISTRICTS.find(
     (d) => d.name.toLowerCase() === districtName.toLowerCase()
@@ -82,8 +91,14 @@ async function getDistrictData(districtName: string, sort: string) {
 }
 
 export default async function DistrictDetailPage({ params, searchParams }: PageProps) {
-  const sort = searchParams.sort || 'latest';
-  const data = await getDistrictData(params.district, sort);
+  const sort = searchParams?.sort || 'latest';
+  const districtParam = params?.district;
+
+  if (!districtParam) {
+    notFound();
+  }
+
+  const data = await getDistrictData(districtParam, sort);
 
   if (!data) {
     notFound();
@@ -91,7 +106,6 @@ export default async function DistrictDetailPage({ params, searchParams }: PageP
 
   const { district, news, categoryStats, totalViews, breakingCount, totalArticles } = data;
 
-  // Group news by category
   const newsByCategory = news.reduce((acc: any, item: any) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
@@ -201,12 +215,11 @@ export default async function DistrictDetailPage({ params, searchParams }: PageP
 
       {/* News Section */}
       <div className="max-w-7xl mx-auto px-4 pb-12">
-        {/* Sort Options */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">All News Articles</h2>
           <div className="flex gap-2">
             <Link
-              href={`/saradesh/${params.district}?sort=latest`}
+              href={`/saradesh/${districtParam}?sort=latest`}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sort === 'latest'
                   ? 'bg-blue-600 text-white'
@@ -216,7 +229,7 @@ export default async function DistrictDetailPage({ params, searchParams }: PageP
               Latest
             </Link>
             <Link
-              href={`/saradesh/${params.district}?sort=popular`}
+              href={`/saradesh/${districtParam}?sort=popular`}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sort === 'popular'
                   ? 'bg-blue-600 text-white'
@@ -240,48 +253,20 @@ export default async function DistrictDetailPage({ params, searchParams }: PageP
           </div>
         ) : (
           <div className="space-y-12">
-            {/* If sorting by category */}
-            {sort === 'category' ? (
-              Object.entries(newsByCategory).map(([category, categoryNews]: [string, any]) => (
-                <div key={category}>
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                      {categoryNews.length}
-                    </span>
-                    {category}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {categoryNews.map((item: any) => (
-                      <NewsCard
-                        key={item._id}
-                        _id={item._id}
-                        title={item.title}
-                        content={item.content}
-                        thumbnail={item.thumbnail}
-                        category={item.category}
-                        views={item.metrics.views}
-                        createdAt={item.createdAt}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {news.map((item: any) => (
-                  <NewsCard
-                    key={item._id}
-                    _id={item._id}
-                    title={item.title}
-                    content={item.content}
-                    thumbnail={item.thumbnail}
-                    category={item.category}
-                    views={item.metrics.views}
-                    createdAt={item.createdAt}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {news.map((item: any) => (
+                <NewsCard
+                  key={item._id}
+                  _id={item._id}
+                  title={item.title}
+                  content={item.content}
+                  thumbnail={item.thumbnail}
+                  category={item.category}
+                  views={item.metrics.views}
+                  createdAt={item.createdAt}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
