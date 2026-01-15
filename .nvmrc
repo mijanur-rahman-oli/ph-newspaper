@@ -1,0 +1,7 @@
+# In your project directory
+echo "20.9.0" > .nvmrc
+
+# Then commit and push
+git add .nvmrc
+git commit -m "Fix: Update Node version to 20.9.0 for Next.js"
+git push origin main
