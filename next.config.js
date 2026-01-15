@@ -7,7 +7,10 @@ const nextConfig = {
         hostname: 'picsum.photos',
       },
     ],
+    unoptimized: true, // Required for Netlify
   },
+  // Add this for Netlify compatibility
+  output: 'standalone',
 };
 
 module.exports = nextConfig;
