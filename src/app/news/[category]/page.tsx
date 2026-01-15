@@ -1,4 +1,3 @@
-// src/app/news/[category]/page.tsx
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import connectDB from '../../../lib/db/connection';
@@ -21,9 +20,6 @@ interface CategoryNewsData {
   categoryCounts: { category: string; count: number }[];
 }
 
-// =====================
-// Metadata
-// =====================
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
   const categoryRaw = params?.category;
@@ -47,18 +43,13 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   };
 }
 
-// =====================
-// Static Params
-// =====================
+
 export async function generateStaticParams() {
   return CATEGORIES.map((category) => ({
     category: category.toLowerCase(),
   }));
 }
 
-// =====================
-// Fetch Category News
-// =====================
 async function getCategoryNews(categoryRaw: string, page: number, sort: string): Promise<CategoryNewsData | null> {
   await connectDB();
 
@@ -94,9 +85,6 @@ async function getCategoryNews(categoryRaw: string, page: number, sort: string):
   };
 }
 
-// =====================
-// Main Page
-// =====================
 export default async function CategoryPage(props: PageProps) {
   const params = await props.params;
   const searchParams = props.searchParams ? await props.searchParams : {};
@@ -132,13 +120,19 @@ export default async function CategoryPage(props: PageProps) {
         </div>
       </div>
 
-      {/* Category Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold mb-2">{categoryName} News</h1>
-          <p className="text-blue-100">
-            {total} {total === 1 ? 'article' : 'articles'} found
-          </p>
+      <div className="bg-gradient-to-r from-blue-800 to-blue-950 text-white border-b border-white/5">
+        <div className="max-w-[1480px] mx-auto px-6 py-6 lg:py-8">
+          <div className="flex items-baseline gap-4">
+            <h1 className="text-xl md:text-2xl font-medium tracking-tight">
+              {categoryName}
+            </h1>
+
+            <span className="text-blue-400/50 font-light">—</span>
+
+            <p className="text-blue-200/60 text-sm tracking-wide">
+              {total.toLocaleString()} {total === 1 ? 'article' : 'articles'}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -193,11 +187,10 @@ export default async function CategoryPage(props: PageProps) {
                       <Link
                         key={pageNum}
                         href={`/news/${categoryRaw}?page=${pageNum}${sort !== 'latest' ? `&sort=${sort}` : ''}`}
-                        className={`px-4 py-2 rounded-lg transition-colors ${
-                          page === pageNum
+                        className={`px-4 py-2 rounded-lg transition-colors ${page === pageNum
                             ? 'bg-blue-600 text-white'
                             : 'bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </Link>
