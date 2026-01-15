@@ -1,6 +1,10 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import mongoose from 'mongoose';
 
+// =====================
+// Load Environment Files
+// =====================
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
 const envPath = path.resolve(process.cwd(), '.env');
 
@@ -11,33 +15,48 @@ console.log('   .env path:', envPath);
 dotenv.config({ path: envLocalPath });
 dotenv.config({ path: envPath });
 
+// =====================
+// Validate Environment
+// =====================
+const MONGODB_URI_RAW = process.env.MONGODB_URI;
 
-import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI;
 console.log('\n🔍 Environment Variables:');
-console.log('   MONGODB_URI:', MONGODB_URI ? '✅ Loaded' : '❌ Missing');
+console.log('   MONGODB_URI:', MONGODB_URI_RAW ? '✅ Loaded' : '❌ Missing');
 
-if (MONGODB_URI) {
-  if (MONGODB_URI.includes('mongodb+srv://')) {
-    console.log('   Type: MongoDB Atlas ✅');
-  } else if (MONGODB_URI.includes('localhost') || MONGODB_URI.includes('127.0.0.1')) {
-    console.log('   Type: Local MongoDB (Wrong! Should be Atlas)');
-  }
-  console.log('   Connection string preview:', MONGODB_URI.substring(0, 50) + '...');
-}
-
-if (!MONGODB_URI) {
-  console.error('\n ERROR: MONGODB_URI not found!');
-  console.error('Please make sure .env.local exists in the project root with:');
-  console.error('MONGODB_URI=mongodb+srv://...\n');
+if (!MONGODB_URI_RAW) {
+  console.error('\n❌ ERROR: MONGODB_URI not found!');
+  console.error('Please add this to .env.local:\n');
+  console.error('MONGODB_URI=mongodb+srv://username:password@cluster/db\n');
   process.exit(1);
 }
 
+// ✅ Type-safe constant (THIS fixes your build error)
+const MONGODB_URI: string = MONGODB_URI_RAW;
+
+if (MONGODB_URI.includes('mongodb+srv://')) {
+  console.log('   Type: MongoDB Atlas ✅');
+} else if (
+  MONGODB_URI.includes('localhost') ||
+  MONGODB_URI.includes('127.0.0.1')
+) {
+  console.log('   Type: Local MongoDB ⚠️');
+}
+
+console.log(
+  '   Connection preview:',
+  MONGODB_URI.substring(0, 45) + '...'
+);
+
+// =====================
+// Imports AFTER env load
+// =====================
 import News from '../lib/db/models/News';
 import { BANGLADESH_DISTRICTS } from '../lib/data/districts';
 import type { NewsCategory } from '../types';
 
+// =====================
+// Sample Data
+// =====================
 interface CategoryData {
   category: NewsCategory;
   titles: string[];
@@ -52,7 +71,8 @@ const sampleNews: CategoryData[] = [
       'Local Government Elections Announced for Next Month',
       'Prime Minister Inaugurates Infrastructure Project',
     ],
-    content: 'In a significant development, political leaders gathered to address pressing matters affecting the nation. The comprehensive discussion covered various aspects of governance and public welfare, with stakeholders presenting detailed proposals for consideration.',
+    content:
+      'In a significant development, political leaders gathered to address pressing matters affecting the nation.',
   },
   {
     category: 'Sports',
@@ -61,7 +81,8 @@ const sampleNews: CategoryData[] = [
       'Local Football Academy Produces National Players',
       'Young Athletes Break Records at State Competition',
     ],
-    content: 'The sports community celebrated remarkable achievements as talented athletes demonstrated exceptional skills. The victory marks a milestone in the region\'s sporting history, inspiring younger generations to pursue excellence in athletics.',
+    content:
+      'The sports community celebrated remarkable achievements as talented athletes demonstrated exceptional skills.',
   },
   {
     category: 'Entertainment',
@@ -70,7 +91,8 @@ const sampleNews: CategoryData[] = [
       'Traditional Music Concert Attracts Thousands',
       'New Cultural Center Opens to Public',
     ],
-    content: 'Cultural enthusiasts gathered for a spectacular celebration of arts and entertainment. The event featured performances from renowned artists and emerging talents, highlighting the rich cultural heritage of the region.',
+    content:
+      'Cultural enthusiasts gathered for a spectacular celebration of arts and entertainment.',
   },
   {
     category: 'Business',
@@ -79,7 +101,8 @@ const sampleNews: CategoryData[] = [
       'Technology Hub Attracts International Investment',
       'Agricultural Export Reaches Record Levels',
     ],
-    content: 'Economic indicators show promising growth as new businesses establish operations in the area. The development is expected to boost employment opportunities and contribute significantly to regional prosperity.',
+    content:
+      'Economic indicators show promising growth as new businesses establish operations in the area.',
   },
   {
     category: 'Technology',
@@ -88,7 +111,8 @@ const sampleNews: CategoryData[] = [
       'Local Startup Develops Innovative Mobile App',
       'High-Speed Internet Reaches Rural Communities',
     ],
-    content: 'Technological advancement continues to transform daily life as innovative solutions address community needs. The implementation of modern infrastructure marks a significant step toward digital inclusion.',
+    content:
+      'Technological advancement continues to transform daily life through innovative solutions.',
   },
   {
     category: 'Health',
@@ -97,7 +121,8 @@ const sampleNews: CategoryData[] = [
       'Free Medical Camp Serves Thousands of Patients',
       'Vaccination Drive Achieves Target Coverage',
     ],
-    content: 'Healthcare providers delivered essential medical services to communities in need. The initiative demonstrates commitment to improving public health outcomes and ensuring access to quality care for all residents.',
+    content:
+      'Healthcare providers delivered essential medical services to communities in need.',
   },
   {
     category: 'Education',
@@ -106,7 +131,8 @@ const sampleNews: CategoryData[] = [
       'Scholarship Program Benefits Underprivileged Students',
       'University Launches New Research Center',
     ],
-    content: 'Educational institutions continue to enhance learning opportunities for students across all levels. The investment in academic infrastructure aims to prepare future generations for emerging challenges and opportunities.',
+    content:
+      'Educational institutions continue to enhance learning opportunities for students.',
   },
   {
     category: 'Crime',
@@ -115,50 +141,62 @@ const sampleNews: CategoryData[] = [
       'Cyber Crime Unit Recovers Stolen Digital Assets',
       'Community Watch Program Reduces Local Incidents',
     ],
-    content: 'Law enforcement agencies successfully addressed security concerns through coordinated operations. The proactive measures have contributed to improved safety and security within the community.',
+    content:
+      'Law enforcement agencies successfully addressed security concerns.',
   },
 ];
 
+// =====================
+// Seed Function
+// =====================
 async function seedDatabase() {
   try {
     console.log('\n🌐 Connecting to MongoDB Atlas...');
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB!\n');
-    
-    // Check database name
-    const dbName = mongoose.connection.db?.databaseName;
-    console.log('Database name:', dbName);
-    
-    console.log('Clearing existing news...');
-    const deleteResult = await News.deleteMany({});
-    console.log(`   Deleted ${deleteResult.deletedCount} existing articles`);
 
-    console.log('\n Creating 80+ news articles...');
-    
+    const dbName = mongoose.connection.db?.databaseName;
+    console.log('📦 Database:', dbName);
+
+    console.log('\n🧹 Clearing existing news...');
+    const deleted = await News.deleteMany({});
+    console.log(`   Deleted ${deleted.deletedCount} articles`);
+
+    console.log('\n📰 Creating 80 news articles...');
     const newsToInsert = [];
-    
+
     for (let i = 0; i < 80; i++) {
-      const randomDistrict = BANGLADESH_DISTRICTS[Math.floor(Math.random() * BANGLADESH_DISTRICTS.length)];
+      const district =
+        BANGLADESH_DISTRICTS[
+          Math.floor(Math.random() * BANGLADESH_DISTRICTS.length)
+        ];
       const categoryData = sampleNews[i % sampleNews.length];
-      const titleIndex = Math.floor(Math.random() * categoryData.titles.length);
-      
+      const title =
+        categoryData.titles[
+          Math.floor(Math.random() * categoryData.titles.length)
+        ];
+
       const contentRepeat = Math.floor(Math.random() * 3) + 2;
-      const extendedContent = Array(contentRepeat).fill(categoryData.content).join(' ');
-      
+      const content = Array(contentRepeat)
+        .fill(categoryData.content)
+        .join(' ');
+
       newsToInsert.push({
-        title: `${categoryData.titles[titleIndex]} in ${randomDistrict.name}`,
-        content: extendedContent,
+        title: `${title} in ${district.name}`,
+        content,
         thumbnail: `https://picsum.photos/seed/${i}/800/600`,
         category: categoryData.category,
         location: {
-          division: randomDistrict.division,
-          district: randomDistrict.name,
+          division: district.division,
+          district: district.name,
         },
         metrics: {
           views: Math.floor(Math.random() * 5000),
           isBreaking: Math.random() > 0.85,
         },
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(
+          Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+        ),
       });
     }
 
@@ -167,47 +205,17 @@ async function seedDatabase() {
     newsToInsert[1].metrics.isBreaking = true;
     newsToInsert[2].metrics.isBreaking = true;
 
-    console.log('💾 Inserting articles into database...');
+    console.log('💾 Inserting articles...');
     const inserted = await News.insertMany(newsToInsert);
-    console.log(`✅ Successfully inserted ${inserted.length} articles!`);
-    
-    // Verify insertion
-    const count = await News.countDocuments();
-    console.log(`✅ Verified: ${count} total articles in database`);
-    
-    const stats = await News.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-    ]);
-    
-    console.log('\n News by Category:');
-    stats.forEach(stat => {
-      console.log(`   ${stat._id}: ${stat.count} articles`);
-    });
-    
-    const districtStats = await News.aggregate([
-      { $group: { _id: '$location.district', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 },
-    ]);
-    
-    console.log('\ Top 10 Districts:');
-    districtStats.forEach(stat => {
-      console.log(`   ${stat._id}: ${stat.count} articles`);
-    });
-    
-    console.log('\n Database seeding completed successfully!');
-    console.log('✨ Run: npm run dev\n');
-    
+    console.log(`✅ Inserted ${inserted.length} articles`);
+
+    const total = await News.countDocuments();
+    console.log(`📊 Total articles: ${total}`);
+
+    console.log('\n✨ Database seeding completed successfully!');
   } catch (error) {
-    console.error('\n ERROR during seeding:');
+    console.error('\n❌ ERROR during seeding');
     console.error(error);
-    if (error instanceof Error) {
-      console.error('\nError details:', error.message);
-      if (error.stack) {
-        console.error('\nStack trace:', error.stack);
-      }
-    }
     process.exit(1);
   } finally {
     await mongoose.connection.close();
@@ -216,4 +224,7 @@ async function seedDatabase() {
   }
 }
 
+// =====================
+// Run Seeder
+// =====================
 seedDatabase();

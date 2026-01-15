@@ -23,7 +23,6 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      {/* Thin top info bar */}
       <div className="bg-gray-50 border-b border-gray-200">
         <div className="max-w-[1480px] mx-auto px-5 lg:px-8">
           <div className="flex justify-between items-center text-xs text-gray-600 py-1.5">
@@ -42,7 +41,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main Navigation Bar */}
+
       <div className="max-w-[1480px] mx-auto px-5 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
@@ -73,7 +72,7 @@ export default function Header() {
               Home
             </Link>
 
-            {CATEGORIES.slice(0, 7).map((category) => (  // Reduced to 7 to make space
+            {CATEGORIES.slice(0, 7).map((category) => (  
               <Link
                 key={category}
                 href={`/news/${category.toLowerCase()}`}
@@ -87,7 +86,6 @@ export default function Header() {
               </Link>
             ))}
 
-            {/* Sara Desh Map Link - Added here */}
             <Link
               href="/saradesh"
               className={`px-3 xl:px-4 py-2 text-sm font-medium rounded transition-colors flex items-center gap-1.5 ${
@@ -101,7 +99,6 @@ export default function Header() {
             </Link>
           </nav>
 
-          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2 -mr-2 text-gray-700 hover:text-[#004488]"
@@ -112,7 +109,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-gray-200 bg-white">
           <div className="max-w-[1480px] mx-auto px-5 py-6">
@@ -144,7 +140,6 @@ export default function Header() {
                 </Link>
               ))}
 
-              {/* Sara Desh Map in Mobile Menu - Added here */}
               <Link
                 href="/saradesh"
                 onClick={() => setMobileMenuOpen(false)}
